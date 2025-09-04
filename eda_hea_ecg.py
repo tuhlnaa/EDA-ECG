@@ -194,6 +194,10 @@ def process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
     unique_diagnoses = set()
     sample_count = 0
     
+    # Lists to collect sampling frequencies and durations for statistics
+    sampling_frequencies = []
+    durations_seconds = []
+    
     print(f"\nProcessing dataset: {dataset_name}")
     print(f"Found {len(hea_files)} ECG files")
     
@@ -207,6 +211,10 @@ def process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
         if metadata:
             all_records.append(metadata)
             sample_count += 1
+            
+            # Collect sampling frequency and duration data for statistics
+            sampling_frequencies.append(metadata['sampling_frequency'])
+            durations_seconds.append(metadata['duration_seconds'])
             
             # Collect unique diagnoses
             for dx in metadata['mapped_diagnoses']:
@@ -240,12 +248,32 @@ def process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
         unique_dx_df.to_csv(unique_dx_file, index=False)
         print(f"Saved unique diagnoses file: {unique_dx_file}")
     
+    # Calculate statistics for sampling frequencies and durations
+    sf_stats = None
+    duration_stats = None
+    
+    if sampling_frequencies:
+        sf_stats = {
+            'min': min(sampling_frequencies),
+            'max': max(sampling_frequencies),
+            'average': sum(sampling_frequencies) / len(sampling_frequencies)
+        }
+    
+    if durations_seconds:
+        duration_stats = {
+            'min': min(durations_seconds),
+            'max': max(durations_seconds),
+            'average': sum(durations_seconds) / len(durations_seconds)
+        }
+    
     # Create summary statistics
     stats = {
         'dataset_name': dataset_name,
         'total_samples': sample_count,
         'unique_diagnoses_count': len(unique_diagnoses),
-        'unique_diagnoses': list(unique_diagnoses)
+        'unique_diagnoses': list(unique_diagnoses),
+        'sampling_frequency_stats': sf_stats,
+        'duration_seconds_stats': duration_stats
     }
     
     # Save statistics
@@ -254,7 +282,20 @@ def process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
         f.write(f"Dataset: {dataset_name}\n")
         f.write(f"Total Samples: {sample_count}\n")
         f.write(f"Unique Diagnoses: {len(unique_diagnoses)}\n")
-        f.write(f"Diagnoses List:\n")
+        
+        if sf_stats:
+            f.write(f"\nSampling Frequency Statistics (Hz):\n")
+            f.write(f"  Minimum: {sf_stats['min']:.2f}\n")
+            f.write(f"  Maximum: {sf_stats['max']:.2f}\n")
+            f.write(f"  Average: {sf_stats['average']:.2f}\n")
+        
+        if duration_stats:
+            f.write(f"\nDuration Statistics (seconds):\n")
+            f.write(f"  Minimum: {duration_stats['min']:.2f}\n")
+            f.write(f"  Maximum: {duration_stats['max']:.2f}\n")
+            f.write(f"  Average: {duration_stats['average']:.2f}\n")
+        
+        f.write(f"\nDiagnoses List:\n")
         for dx in sorted(unique_diagnoses):
             f.write(f"  - {dx}\n")
     
@@ -298,7 +339,7 @@ def main():
     # Configuration
     dx_map_path = 'G12EC/Dx_map.csv'  # Path to your Dx mapping file
     datasets_config = {
-        'dataset1': './G12EC/cpsc_2018_extra',  # Replace with actual paths
+        'dataset1': './G12EC/cpsc_2018',  # Replace with actual paths
         #'dataset2': '/path/to/dataset2',
         # Add more datasets as needed
     }
@@ -323,11 +364,22 @@ def main():
     all_stats = []
     total_samples = 0
     
+    # Lists to collect overall statistics across all datasets
+    all_sampling_frequencies = []
+    all_durations_seconds = []
+    
     for dataset_name, dataset_path in datasets_config.items():
         if os.path.exists(dataset_path):
             stats = process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
             all_stats.append(stats)
             total_samples += stats['total_samples']
+            
+            # Collect data for overall statistics
+            if stats['sampling_frequency_stats']:
+                # Note: We would need the raw data for accurate overall stats
+                # For now, we'll approximate using the dataset averages
+                pass
+            
         else:
             print(f"Warning: Dataset path does not exist: {dataset_path}")
     
@@ -342,6 +394,16 @@ def main():
         print(f"\n{stats['dataset_name']}:")
         print(f"  Samples: {stats['total_samples']}")
         print(f"  Unique diagnoses: {stats['unique_diagnoses_count']}")
+        
+        if stats['sampling_frequency_stats']:
+            sf_stats = stats['sampling_frequency_stats']
+            print(f"  Sampling Frequency (Hz) - Min: {sf_stats['min']:.2f}, "
+                  f"Max: {sf_stats['max']:.2f}, Avg: {sf_stats['average']:.2f}")
+        
+        if stats['duration_seconds_stats']:
+            dur_stats = stats['duration_seconds_stats']
+            print(f"  Duration (seconds) - Min: {dur_stats['min']:.2f}, "
+                  f"Max: {dur_stats['max']:.2f}, Avg: {dur_stats['average']:.2f}")
     
     # Save combined summary
     summary_file = Path(output_base_path) / 'combined_summary.txt'
@@ -355,11 +417,23 @@ def main():
             f.write(f"Dataset: {stats['dataset_name']}\n")
             f.write(f"  Samples: {stats['total_samples']}\n")
             f.write(f"  Unique diagnoses: {stats['unique_diagnoses_count']}\n")
+            
+            if stats['sampling_frequency_stats']:
+                sf = stats['sampling_frequency_stats']
+                f.write(f"  Sampling Frequency (Hz) - Min: {sf['min']:.2f}, "
+                       f"Max: {sf['max']:.2f}, Avg: {sf['average']:.2f}\n")
+            
+            if stats['duration_seconds_stats']:
+                dur = stats['duration_seconds_stats']
+                f.write(f"  Duration (seconds) - Min: {dur['min']:.2f}, "
+                       f"Max: {dur['max']:.2f}, Avg: {dur['average']:.2f}\n")
+            
             f.write(f"  Diagnoses: {', '.join(stats['unique_diagnoses'][:5])}...\n\n")
 
 if __name__ == "__main__":
     main()
 
+    
 """
 Output Structure:
 
