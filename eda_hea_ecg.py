@@ -278,7 +278,7 @@ def process_dataset(dataset_path, dx_mapping_df, dataset_name, output_base_path)
     
     # Save statistics
     stats_file = output_path / 'metadata' / f'{dataset_name}_stats.txt'
-    with open(stats_file, 'w') as f:
+    with open(stats_file, 'w', encoding='utf-8') as f:
         f.write(f"Dataset: {dataset_name}\n")
         f.write(f"Total Samples: {sample_count}\n")
         f.write(f"Unique Diagnoses: {len(unique_diagnoses)}\n")
@@ -336,10 +336,10 @@ def main():
     """
     Main processing function
     """
-    # Configuration
-    dx_map_path = 'G12EC/Dx_map.csv'  # Path to your Dx mapping file
+    # Configuration (Path to your Dx mapping file)
+    dx_map_path = 'G12EC/Dx_map.csv'
     datasets_config = {
-        'dataset1': './G12EC/cpsc_2018',  # Replace with actual paths
+        'dataset1': './G12EC/cpsc_2018',
         #'dataset2': '/path/to/dataset2',
         # Add more datasets as needed
     }

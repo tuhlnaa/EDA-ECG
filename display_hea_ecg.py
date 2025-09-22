@@ -129,7 +129,7 @@ def read_mat_file_alternative(mat_file_path):
 # Example usage
 if __name__ == "__main__":
     # Replace 'JS03244' with your actual file path (without extension)
-    ecg_file = r"D:\ECG-dataset\G12EC\ptb-xl\g1\HR00001"  # This will look for JS03244.hea and JS03244.mat
+    ecg_file = r"JS00001"  # This will look for JS03244.hea and JS03244.mat
     
     print("Method 1: Using WFDB library")
     display_ecg_info(ecg_file)
